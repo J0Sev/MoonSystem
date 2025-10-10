@@ -30,4 +30,14 @@ typedef struct {
     char filename[FILENAME_MAX_LEN];
 } FILE;
 
+//Function prototypes
+FILE* fopen(const char* filename, const char* mode);
+int fclose(FILE* stream);
+size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
+size_t fread(void *ptr, size_t size, size_t count, FILE *stream);
+int fseek(FILE* stream, long offset, int origin);
+long ftell(FILE* stream);
+int feof(FILE* stream);
+void rewind(FILE* stream);
+
 #endif

@@ -1,7 +1,4 @@
-
-struct FILE {
-
-};
+#include "syscalls.h"
 
 FILE* fopen(const char *filename, const char *mode) {
 	//send the fopen signal to GM
