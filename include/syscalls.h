@@ -40,4 +40,12 @@ long ftell(FILE* stream);
 int feof(FILE* stream);
 void rewind(FILE* stream);
 
+//Lower level functions required for main functions
+int fs_init(void);
+uint32_t fs_find_file(const char* filename);
+uint32_t fs_create_file(const char* filename);
+int fs_read_cluster(uint32_t cluster, uint8_t* buffer);
+int fs_write_cluster(uint32_t cluster, const uint8_t buffer);
+uint32_t fs_get_next_cluster(uint32_t cluster);
+
 #endif
