@@ -1,6 +1,19 @@
-#define FOPEN_SIGNAL	0
-#define NEXT_ARG		1
 #include "syscalls.h"
+#include <stdint.h>
+
+//Signal Codes
+#define FOPEN_SIGNAL    0
+#define FCLOSE_SIGNAL   1
+#define FREAD_SIGNAL    2
+#define FWRITE_SIGNAL   3
+#define FSEEK_SIGNAL    4
+#define FTELL_SIGNAL    5
+#define FEOF_SIGNAL     6
+#define REWIND_SIGNAL   7
+
+//Protocol Control Codes
+#define NEXT_ARG        0x10
+#define ACK             0x11
 
 void sendSignalToGM(char b) {
 
