@@ -1,10 +1,6 @@
 #define FOPEN_SIGNAL	0
 #define NEXT_ARG		1
-
-
-struct FILE {
-
-};
+#include "syscalls.h"
 
 void sendSignalToGM(char b) {
 
