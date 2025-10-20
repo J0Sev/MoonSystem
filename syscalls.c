@@ -48,6 +48,21 @@ void sendBytesToGM(const uint8_t* data, size_t len){
 	}
 }
 
+uint32_t getUint32FromGM(void) {
+    uint32_t value = 0;
+    value |= ((uint32_t)getByteFromGM()) << 0;
+    value |= ((uint32_t)getByteFromGM()) << 8;
+    value |= ((uint32_t)getByteFromGM()) << 16;
+    value |= ((uint32_t)getByteFromGM()) << 24;
+    return value;
+}
+
+void getBytesFromGM(uint8_t* buffer, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        buffer[i] = getByteFromGM();
+    }
+} 
+
 void awaitSignalFromGM(char b) {
 	//hang until GM sends b signal
 }
