@@ -15,8 +15,19 @@
 #define NEXT_ARG        0x10
 #define ACK             0x11
 
+//Global file table to store data
+static FILE file_table[MAX_OPEN_FILES];
+
 void sendSignalToGM(char b) {
 
+}
+
+void sendByteToGM(uint8_t b){
+	//Send singular byte to GM
+}
+
+void sendUint32ToGM(uint32_t value){
+	//Send 32 bit value
 }
 
 void sendStringToGM(char* filename) {
@@ -28,6 +39,12 @@ void sendStringToGM(char* filename) {
 		for (int j=0; j<1000000; ++j) 
 			x = 0;
 		
+	}
+}
+
+void sendBytesToGM(const uint8_t* data, size_t len){
+	for (size_t i = 0; i < len; i++){
+		sendByteToGM(data[i]);
 	}
 }
 
