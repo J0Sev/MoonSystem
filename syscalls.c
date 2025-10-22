@@ -1,5 +1,6 @@
 #include "syscalls.h"
 #include <stdint.h>
+#include "BCM2837.h"
 
 //Signal Codes
 #define FOPEN_SIGNAL    0
@@ -15,8 +16,20 @@
 #define NEXT_ARG        0x10
 #define ACK             0x11
 
+//GPIO Pin signal definitions
+#define GPIO_PIN_ZERO 17
+#define GPIO_PIN_ONE 27
+#define SIGNAL_DELAY 100
+
 //Global file table to store data
 static FILE file_table[MAX_OPEN_FILES];
+
+//Timed delay function
+static void delay_us(uint32_t microsecs){
+	volatile uint32_t count = microsecs * 50;
+	while (count--) {
+	}
+}
 
 void sendSignalToGM(char b) {
 
@@ -67,7 +80,7 @@ void awaitSignalFromGM(char b) {
 	//hang until GM sends b signal
 }
 
-char* getStreamFromGM(uint numBytes) {
+char* getStreamFromGM(uint8_t* numBytes) {
 	//read numBytes bytes from GM into a buffer and return the pointer to the buffer
 }
 
