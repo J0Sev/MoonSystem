@@ -1,0 +1,1 @@
+We are still trying to boot our own kernel .img file onto a raspberry pi 3. We're running into issues, every etcher and imager that we've tried is saying that the format of the img file is invalid for our sd. We'll need to do a lot more troubleshooting to properly boot our bare metal program.
