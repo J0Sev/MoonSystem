@@ -31,6 +31,17 @@ static void delay_us(uint32_t microsecs){
 	}
 }
 
+//Helper function to pulse gpio pin
+static void pulse_gpio(uint32_t pin){
+	//Set pin high
+	BCM2837_PUT32(BCM2837_GPSET0, (1 << pin));
+	delay_us(SIGNAL_DELAY);
+
+	//Set pin low
+	BCM2837_PUT32(BCM2837_GPCLR0, (1 << pin));
+	delay_us(SIGNAL_DELAY);
+}
+
 void sendSignalToGM(char b) {
 
 }
