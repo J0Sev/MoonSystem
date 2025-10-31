@@ -42,8 +42,59 @@ static void pulse_gpio(uint32_t pin){
 	delay_us(SIGNAL_DELAY);
 }
 
-void sendSignalToGM(char b) {
+void initGPIOCommunication(void) {
+    uint32_t reg_val;
+    uint32_t fsel_reg_addr;
+    uint32_t fsel_mask;
+    uint32_t fsel_value;
+    
+    // Configure GPIO_PIN_ZERO (17) as output
+    // Pin 17 is controlled by GPFSEL1 register
+    fsel_reg_addr = BCM2837_GPFSEL1;  // Physical address for pins 10-19
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    
+    // Clear bits for pin 17 (bits 23-21 in GPFSEL1)
+    fsel_mask = 0x7 << 21;  // 0b111 at bit position 21
+    reg_val &= ~fsel_mask;
+    
+    // Set pin 17 to output (001)
+    fsel_value = 0x1 << 21;
+    reg_val |= fsel_value;
+    
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+    
+    // Configure GPIO_PIN_ONE (27) as output
+    // Pin 27 is controlled by GPFSEL2 register
+    fsel_reg_addr = BCM2837_GPFSEL2;  // Physical address for pins 20-29
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    
+    // Clear bits for pin 27 (bits 23-21 in GPFSEL2)
+    fsel_mask = 0x7 << 21;  // 0b111 at bit position 21
+    reg_val &= ~fsel_mask;
+    
+    // Set pin 27 to output (001)
+    fsel_value = 0x1 << 21;
+    reg_val |= fsel_value;
+    
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+    
+    // Ensure both pins start low
+    BCM2837_PUT32(BCM2837_GPCLR0, (1 << GPIO_PIN_ZERO) | (1 << GPIO_PIN_ONE));
+}
 
+void sendSignalToGM(char b) {
+	uint8_t byte = (uint8_t)b;
+
+	//Send each bit, Most Significant Bit first
+	for (int i = 7; i >= 0; i--){
+		if (byte & (1 << i)){
+			//Bit is 1: pulse the "one" pin
+			pulse_gpio(GPIO_PIN_ONE);
+		} else {
+			//Bit is 0: pulse the "zero" pin
+			pulse_gpio(GPIO_PIN_ZERO);
+		}
+	}
 }
 
 void sendByteToGM(uint8_t b){
