@@ -1,5 +1,6 @@
 #include "syscalls.h"
 #include <stdint.h>
+#include <string.h>
 #include "BCM2837.h"
 
 //Signal Codes
@@ -99,22 +100,25 @@ void sendSignalToGM(char b) {
 
 void sendByteToGM(uint8_t b){
 	//Send singular byte to GM
+	sendSignalToGM((char)b);
 }
 
 void sendUint32ToGM(uint32_t value){
-	//Send 32 bit value
+    //Send 32 bit value (Least significant byte first)
+    sendByteToGM(value & 0xFF);           // Byte 0 (LSB)
+    sendByteToGM((value >> 8) & 0xFF);    // Byte 1
+    sendByteToGM((value >> 16) & 0xFF);   // Byte 2
+    sendByteToGM((value >> 24) & 0xFF);   // Byte 3 (MSB)
 }
 
 void sendStringToGM(char* filename) {
-	int x;
-	for (int i=0; filename[i] != '\0'; ++i) {
-		sendSignalToGM(filename[i]);
-
-		//hang for a milisecond or so
-		for (int j=0; j<1000000; ++j) 
-			x = 0;
-		
-	}
+    // Send each character until null terminator
+    while (*filename != '\0') {
+        sendSignalToGM(*filename);
+        filename++;
+    }
+    // Send null terminator
+    sendSignalToGM('\0');
 }
 
 void sendBytesToGM(const uint8_t* data, size_t len){
@@ -139,13 +143,51 @@ void getBytesFromGM(uint8_t* buffer, size_t len) {
 } 
 
 void awaitSignalFromGM(char b) {
-	//hang until GM sends b signal
+    //Hang until GM sends the expected signal
+    uint8_t received;
+    do {
+        received = getByteFromGM();
+    } while (received != (uint8_t)b);
 }
 
 char* getStreamFromGM(uint8_t* numBytes) {
 	//read numBytes bytes from GM into a buffer and return the pointer to the buffer
 }
 
+// Helper function to find free file slot
+static FILE* allocate_file_slot(void) {
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        if (!file_table[i].is_open) {
+            return &file_table[i];
+        }
+    }
+    return NULL;  // No free slots
+}
+
+// Helper function to parse mode string
+static uint8_t parse_mode(const char* mode) {
+    uint8_t flags = 0;
+    
+    while (*mode) {
+        switch (*mode) {
+            case 'r':
+                flags |= MODE_READ;
+                break;
+            case 'w':
+                flags |= MODE_WRITE;
+                break;
+            case 'a':
+                flags |= MODE_APPEND;
+                break;
+            case '+':
+                flags |= (MODE_READ | MODE_WRITE);
+                break;
+        }
+        mode++;
+    }
+    
+    return flags;
+}
 
 FILE* fopen(const char *filename, const char *mode) {
 	//send the fopen signal to GM
