@@ -190,24 +190,73 @@ static uint8_t parse_mode(const char* mode) {
 }
 
 FILE* fopen(const char *filename, const char *mode) {
-	//send the fopen signal to GM
-	sendSignalToGM(FOPEN_SIGNAL);
+    // Find a free file slot
+    FILE* file = allocate_file_slot();
+    if (!file) {
+        return NULL;  // No available slots
+    }
+    
+    // Send the fopen signal to GM
+    sendSignalToGM(FOPEN_SIGNAL);
 
-	//wait for GM to request the next argument to fopen
-	awaitSignalFromGM(NEXT_ARG);
+    // Wait for GM to request the next argument
+    awaitSignalFromGM(NEXT_ARG);
 
-	//send filename to GM
-	sendStringToGM(filename);
+    // Send filename to GM
+    sendStringToGM(filename);
 
-	char* buffer = char[8];
-	buffer = sendSignalToGM(mode);
+    // Wait for GM to request mode
+    awaitSignalFromGM(NEXT_ARG);
 
-	return getStreamFromGM(8);	
+    // Send mode to GM
+    sendStringToGM(mode);
+
+    // Wait for ACK from GM
+    awaitSignalFromGM(ACK);
+
+    // Receive file handle from GM
+    uint32_t file_handle = getUint32FromGM();
+    
+    // Receive file size from GM
+    uint32_t file_size = getUint32FromGM();
+
+    // Initialize the FILE structure
+    file->is_open = 1;
+    file->mode = parse_mode(mode);
+    file->current_cluster = file_handle;
+    file->file_size = file_size;
+    file->position = 0;
+    file->buffer_dirty = 0;
+    file->buffer_cluster = 0;
+    
+    // Copy filename
+    strncpy(file->filename, filename, FILENAME_MAX_LEN - 1);
+    file->filename[FILENAME_MAX_LEN - 1] = '\0';
+
+    return file;    
 }
 
 int fclose(FILE *stream) {
-	//send the fclose signal to GM
-
+    if (!stream || !stream->is_open) {
+        return -1;  // Invalid stream
+    }
+    
+    // Send the fclose signal to GM
+    sendSignalToGM(FCLOSE_SIGNAL);
+    
+    // Wait for GM to request file handle
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send file handle
+    sendUint32ToGM(stream->current_cluster);
+    
+    // Wait for ACK
+    awaitSignalFromGM(ACK);
+    
+    // Mark file as closed
+    stream->is_open = 0;
+    
+    return 0;
 }
 
 size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream) {
