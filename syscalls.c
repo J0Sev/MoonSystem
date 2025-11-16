@@ -345,11 +345,62 @@ size_t fread(void *ptr, size_t size, size_t count, FILE *stream) {
 }
 
 int fseek(FILE *stream, long offset, int whence) {
-
+    if (!stream || !stream->is_open) {
+        return -1;  // Invalid stream
+    }
+    
+    // Send the fseek signal to GM
+    sendSignalToGM(FSEEK_SIGNAL);
+    
+    // Wait for GM to request file handle
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send file handle
+    sendUint32ToGM(stream->current_cluster);
+    
+    // Wait for GM to request offset
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send offset (as 32-bit value)
+    sendUint32ToGM((uint32_t)offset);
+    
+    // Wait for GM to request whence
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send whence
+    sendByteToGM((uint8_t)whence);
+    
+    // Wait for ACK
+    awaitSignalFromGM(ACK);
+    
+    // Receive new position
+    stream->position = getUint32FromGM();
+    
+    return 0;  // Success
 }
 
 long ftell(FILE *stream) {
-
+    if (!stream || !stream->is_open) {
+        return -1L;  // Invalid stream
+    }
+    
+    // Send the ftell signal to GM
+    sendSignalToGM(FTELL_SIGNAL);
+    
+    // Wait for GM to request file handle
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send file handle
+    sendUint32ToGM(stream->current_cluster);
+    
+    // Wait for ACK
+    awaitSignalFromGM(ACK);
+    
+    // Receive current position
+    uint32_t position = getUint32FromGM();
+    stream->position = position;
+    
+    return (long)position;
 }
 
 
