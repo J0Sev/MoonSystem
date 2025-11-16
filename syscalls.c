@@ -261,11 +261,86 @@ int fclose(FILE *stream) {
 
 size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream) {
 	//send the fwrite signal to GM, wait for the confirmation signal from GM, then send the data to GM
-
+        if (!stream || !stream->is_open || !(stream->mode & MODE_WRITE)) {
+        return 0;  // Invalid stream or not writable
+    }
+    
+    size_t total_bytes = size * count;
+    const uint8_t* data = (const uint8_t*)ptr;
+    
+    // Send the fwrite signal to GM
+    sendSignalToGM(FWRITE_SIGNAL);
+    
+    // Wait for GM to request file handle
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send file handle
+    sendUint32ToGM(stream->current_cluster);
+    
+    // Wait for GM to request byte count
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send number of bytes to write
+    sendUint32ToGM(total_bytes);
+    
+    // Wait for GM to request data
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send the actual data
+    sendBytesToGM(data, total_bytes);
+    
+    // Wait for ACK
+    awaitSignalFromGM(ACK);
+    
+    // Receive number of bytes actually written
+    uint32_t bytes_written = getUint32FromGM();
+    
+    // Update position
+    stream->position += bytes_written;
+    if (stream->position > stream->file_size) {
+        stream->file_size = stream->position;
+    }
+    
+    return bytes_written / size;  // Return number of items written
 }
 
 size_t fread(void *ptr, size_t size, size_t count, FILE *stream) {
 	//send the fread signal to GM, read the data incoming from GM
+        if (!stream || !stream->is_open || !(stream->mode & MODE_READ)) {
+        return 0;  // Invalid stream or not readable
+    }
+    
+    size_t total_bytes = size * count;
+    uint8_t* data = (uint8_t*)ptr;
+    
+    // Send the fread signal to GM
+    sendSignalToGM(FREAD_SIGNAL);
+    
+    // Wait for GM to request file handle
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send file handle
+    sendUint32ToGM(stream->current_cluster);
+    
+    // Wait for GM to request byte count
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send number of bytes to read
+    sendUint32ToGM(total_bytes);
+    
+    // Wait for ACK
+    awaitSignalFromGM(ACK);
+    
+    // Receive number of bytes that will be sent
+    uint32_t bytes_to_receive = getUint32FromGM();
+    
+    // Receive the actual data
+    getBytesFromGM(data, bytes_to_receive);
+    
+    // Update position
+    stream->position += bytes_to_receive;
+    
+    return bytes_to_receive / size;  // Return number of items read
 
 }
 
