@@ -403,8 +403,62 @@ long ftell(FILE *stream) {
     return (long)position;
 }
 
+int feof(FILE *stream) {
+    if (!stream || !stream->is_open) {
+        return 1;  // Invalid stream = EOF
+    }
+    
+    // Send the feof signal to GM
+    sendSignalToGM(FEOF_SIGNAL);
+    
+    // Wait for GM to request file handle
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send file handle
+    sendUint32ToGM(stream->current_cluster);
+    
+    // Wait for ACK
+    awaitSignalFromGM(ACK);
+    
+    // Receive EOF status (0 = not EOF, 1 = EOF)
+    uint8_t eof_status = getByteFromGM();
+    
+    return eof_status;
+}
 
+void rewind(FILE *stream) {
+    if (!stream || !stream->is_open) {
+        return;  // Invalid stream
+    }
+    
+    // Send the rewind signal to GM
+    sendSignalToGM(REWIND_SIGNAL);
+    
+    // Wait for GM to request file handle
+    awaitSignalFromGM(NEXT_ARG);
+    
+    // Send file handle
+    sendUint32ToGM(stream->current_cluster);
+    
+    // Wait for ACK
+    awaitSignalFromGM(ACK);
+    
+    // Reset position
+    stream->position = 0;
+}
 
+// File system initialization
+int fs_init(void) {
+    // Initialize GPIO communication
+    initGPIOCommunication();
+    
+    // Clear file table
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        file_table[i].is_open = 0;
+    }
+    
+    return 0;  // Success
+}
 
 int main() {
 
