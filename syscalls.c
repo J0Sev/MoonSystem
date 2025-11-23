@@ -18,8 +18,10 @@
 #define ACK             0x11
 
 //GPIO Pin signal definitions
-#define GPIO_PIN_ZERO 17
-#define GPIO_PIN_ONE 27
+#define GPIO_PIN_ZERO 17 //Output: Send 0 bits
+#define GPIO_PIN_ONE 27 //Output: Send 1 bits
+#define GPIO_PIN_RX_ZERO 22 // Input: receive 0 bits
+#define GPIO_PIN_RX_ONE 23 // Input: receive 1 bits
 #define SIGNAL_DELAY 100
 
 //Global file table to store data
@@ -48,38 +50,67 @@ void initGPIOCommunication(void) {
     uint32_t fsel_reg_addr;
     uint32_t fsel_mask;
     uint32_t fsel_value;
-    
+
     // Configure GPIO_PIN_ZERO (17) as output
-    // Pin 17 is controlled by GPFSEL1 register
-    fsel_reg_addr = BCM2837_GPFSEL1;  // Physical address for pins 10-19
+    fsel_reg_addr = BCM2837_GPFSEL1;
     reg_val = BCM2837_GET32(fsel_reg_addr);
-    
-    // Clear bits for pin 17 (bits 23-21 in GPFSEL1)
-    fsel_mask = 0x7 << 21;  // 0b111 at bit position 21
+    fsel_mask = 0x7 << 21;
     reg_val &= ~fsel_mask;
-    
-    // Set pin 17 to output (001)
     fsel_value = 0x1 << 21;
     reg_val |= fsel_value;
-    
     BCM2837_PUT32(fsel_reg_addr, reg_val);
     
     // Configure GPIO_PIN_ONE (27) as output
-    // Pin 27 is controlled by GPFSEL2 register
-    fsel_reg_addr = BCM2837_GPFSEL2;  // Physical address for pins 20-29
+    fsel_reg_addr = BCM2837_GPFSEL2;
     reg_val = BCM2837_GET32(fsel_reg_addr);
-    
-    // Clear bits for pin 27 (bits 23-21 in GPFSEL2)
-    fsel_mask = 0x7 << 21;  // 0b111 at bit position 21
+    fsel_mask = 0x7 << 21;
     reg_val &= ~fsel_mask;
-    
-    // Set pin 27 to output (001)
     fsel_value = 0x1 << 21;
     reg_val |= fsel_value;
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+        
+    // Configure GPIO_PIN_RX_ZERO (22) as input
+    // Pin 22 is controlled by GPFSEL2 register
+    fsel_reg_addr = BCM2837_GPFSEL2;
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    
+    // Pin 22 position in GPFSEL2: (22 - 20) = 2, so bits 6-8
+    fsel_mask = 0x7 << 6;  // 0b111 at bit position 6
+    reg_val &= ~fsel_mask;  // Clear bits to 000 (INPUT mode)
     
     BCM2837_PUT32(fsel_reg_addr, reg_val);
     
-    // Ensure both pins start low
+    // Configure GPIO_PIN_RX_ONE (23) as input
+    // Pin 23 is also controlled by GPFSEL2 register
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    
+    // Pin 23 position in GPFSEL2: (23 - 20) = 3, so bits 9-11
+    fsel_mask = 0x7 << 9;  // 0b111 at bit position 9
+    reg_val &= ~fsel_mask;  // Clear bits to 000 (INPUT mode)
+    
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+    
+    // Set pull-down resistors for input pins this ensures the pins read LOW (0) when nothing is connected
+    
+    // Enable pull-down control
+    BCM2837_PUT32(BCM2837_GPPUD, 0x1);  // 0x1 = pull-down, 0x2 = pull-up
+    
+    // Wait 150 cycles for the control signal to set up
+    delay_us(1);
+    
+    // Clock the control signal into pins 22 and 23
+    BCM2837_PUT32(BCM2837_GPPUDCLK0, (1 << GPIO_PIN_RX_ZERO) | (1 << GPIO_PIN_RX_ONE));
+    
+    // Wait 150 cycles
+    delay_us(1);
+    
+    // Remove the control signal
+    BCM2837_PUT32(BCM2837_GPPUD, 0);
+    
+    // Remove the clock
+    BCM2837_PUT32(BCM2837_GPPUDCLK0, 0);
+    
+    //Initialize output pins to LOW
     BCM2837_PUT32(BCM2837_GPCLR0, (1 << GPIO_PIN_ZERO) | (1 << GPIO_PIN_ONE));
 }
 
