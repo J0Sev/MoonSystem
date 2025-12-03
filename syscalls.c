@@ -158,6 +158,52 @@ void sendBytesToGM(const uint8_t* data, size_t len){
 	}
 }
 
+uint8_t getByteFromGM(void) {
+    uint8_t result = 0;
+    
+    // Receive each bit, MSB first (same order as sending)
+    for (int i = 7; i >= 0; i--) {
+        uint8_t bit_received = 0;
+        uint8_t pulse_detected = 0;
+        
+        // Wait for a pulse on either input pin
+        while (!pulse_detected) {
+            uint32_t pin_state = BCM2837_GET32(BCM2837_GPLEV0);
+            
+            // Check if pin RX_ONE is HIGH (bit is 1)
+            if (pin_state & (1 << GPIO_PIN_RX_ONE)) {
+                bit_received = 1;
+                pulse_detected = 1;
+                
+                // Wait for the pin to go back LOW (end of pulse)
+                while (BCM2837_GET32(BCM2837_GPLEV0) & (1 << GPIO_PIN_RX_ONE)) {
+                    // Busy wait
+                }
+            }
+            // Check if pin RX_ZERO is HIGH (bit is 0)
+            else if (pin_state & (1 << GPIO_PIN_RX_ZERO)) {
+                bit_received = 0;
+                pulse_detected = 1;
+                
+                // Wait for the pin to go back LOW (end of pulse)
+                while (BCM2837_GET32(BCM2837_GPLEV0) & (1 << GPIO_PIN_RX_ZERO)) {
+                    // Busy wait
+                }
+            }
+        }
+        
+        // Set the bit in the result if it was 1
+        if (bit_received) {
+            result |= (1 << i);
+        }
+        
+        // Small delay before reading next bit
+        delay_us(SIGNAL_DELAY / 2);
+    }
+    
+    return result;
+}
+
 uint32_t getUint32FromGM(void) {
     uint32_t value = 0;
     value |= ((uint32_t)getByteFromGM()) << 0;
@@ -183,6 +229,19 @@ void awaitSignalFromGM(char b) {
 
 char* getStreamFromGM(uint8_t* numBytes) {
 	//read numBytes bytes from GM into a buffer and return the pointer to the buffer
+    //Receive the number of bytes first
+    uint8_t count = getByteFromGM();
+    *numBytes = count;
+    
+    //Allocate buffer
+    static char buffer[256];  // Static buffer (limit: 256 bytes)
+    
+    //Read bytes into buffer
+    for (uint8_t i = 0; i < count; i++) {
+        buffer[i] = (char)getByteFromGM();
+    }
+    
+    return buffer;
 }
 
 // Helper function to find free file slot

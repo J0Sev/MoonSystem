@@ -48,4 +48,8 @@ int fs_read_cluster(uint32_t cluster, uint8_t* buffer);
 int fs_write_cluster(uint32_t cluster, const uint8_t buffer);
 uint32_t fs_get_next_cluster(uint32_t cluster);
 
+// GPIO Pin functions
+void initGPIOCommunication(void);
+uint8_t getByteFromGM(void);
+
 #endif

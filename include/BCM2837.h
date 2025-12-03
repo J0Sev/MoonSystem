@@ -27,6 +27,8 @@
 #define BCM2837_GPCLR0  	0x3F200028
 #define BCM2837_GPPUD       	0x3F200094
 #define BCM2837_GPPUDCLK0   	0x3F200098
+//GPIO Pin Level Register (for reading pin states)
+#define BCM2837_GPLEV0  0x3F200034
 
 #define BCM2837_AUX_BASE	0x3F215000
 #define BCM2837_AUX_SIZE	0x70
