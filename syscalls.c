@@ -551,5 +551,18 @@ int fs_init(void) {
 }
 
 int main() {
-
+    fs_init();
+    
+    // Test: Open a file
+    FILE* f = fopen("test.txt", "r");
+    if (f) {
+        // Test: Read 10 bytes
+        char buffer[10];
+        size_t bytes_read = fread(buffer, 1, 10, f);
+        
+        // Test: Close the file
+        fclose(f);
+    }
+    
+    return 0;
 }
