@@ -60,3 +60,88 @@ typedef struct {
 
 static GMFileEntry file_table[MAX_OPEN_FILES];
 static uint32_t next_handle = 1;
+
+//GPIO Communication Functions
+static void delay_us(uint32_t microsecs) {
+    volatile uint32_t count = microsecs * 50;
+    while (count--) {}
+}
+
+static void pulse_gpio(uint32_t pin) {
+    BCM2837_PUT32(BCM2837_GPSET0, (1 << pin));
+    delay_us(SIGNAL_DELAY);
+    BCM2837_PUT32(BCM2837_GPCLR0, (1 << pin));
+    delay_us(SIGNAL_DELAY);
+}
+
+void initGPIOCommunication(void) {
+    uint32_t reg_val;
+    uint32_t fsel_reg_addr;
+    uint32_t fsel_mask;
+    uint32_t fsel_value;
+    
+    printf("[GM] Initializing GPIO communication...\n");
+    
+    // Configure GPIO_PIN_ZERO (22) as output
+    fsel_reg_addr = BCM2837_GPFSEL2;
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    fsel_mask = 0x7 << 6;  // Pin 22: bits 6-8
+    reg_val &= ~fsel_mask;
+    fsel_value = 0x1 << 6;
+    reg_val |= fsel_value;
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+    
+    // Configure GPIO_PIN_ONE (23) as output
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    fsel_mask = 0x7 << 9;  // Pin 23: bits 9-11
+    reg_val &= ~fsel_mask;
+    fsel_value = 0x1 << 9;
+    reg_val |= fsel_value;
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+    
+    // Configure GPIO_PIN_RX_ZERO (17) as input
+    fsel_reg_addr = BCM2837_GPFSEL1;
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    fsel_mask = 0x7 << 21;  // Pin 17: bits 21-23
+    reg_val &= ~fsel_mask;  // Clear to 000 (input)
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+    
+    // Configure GPIO_PIN_RX_ONE (27) as input
+    fsel_reg_addr = BCM2837_GPFSEL2;
+    reg_val = BCM2837_GET32(fsel_reg_addr);
+    fsel_mask = 0x7 << 21;  // Pin 27: bits 21-23
+    reg_val &= ~fsel_mask;  // Clear to 000 (input)
+    BCM2837_PUT32(fsel_reg_addr, reg_val);
+    
+    // Set pull-down resistors for input pins
+    BCM2837_PUT32(BCM2837_GPPUD, 0x1);
+    delay_us(1);
+    BCM2837_PUT32(BCM2837_GPPUDCLK0, (1 << GPIO_PIN_RX_ZERO) | (1 << GPIO_PIN_RX_ONE));
+    delay_us(1);
+    BCM2837_PUT32(BCM2837_GPPUD, 0);
+    BCM2837_PUT32(BCM2837_GPPUDCLK0, 0);
+    
+    // Initialize output pins to LOW
+    BCM2837_PUT32(BCM2837_GPCLR0, (1 << GPIO_PIN_ZERO) | (1 << GPIO_PIN_ONE));
+    
+    printf("[GM] GPIO initialized\n");
+}
+
+int main(void) {
+    printf("GM File System Handler\n");
+    
+    #if USING_GPIO
+        printf("Mode: Real GPIO (Raspberry Pi)\n");
+    #else
+        printf("Mode: Simulation (Windows)\n");
+        printf("WARNING: GPIO functions are disabled!\n");
+    #endif
+        
+    #if USING_GPIO
+        // Initialize GPIO only on Linux
+        initGPIOCommunication();
+    #else
+        printf("[SIMULATION] Skipping GPIO initialization\n");
+        printf("[SIMULATION] Use this build for testing file operations only\n\n");
+    #endif
+}
