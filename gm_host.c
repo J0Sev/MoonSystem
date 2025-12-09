@@ -127,6 +127,71 @@ void initGPIOCommunication(void) {
     printf("[GM] GPIO initialized\n");
 }
 
+void sendByteToPI(uint8_t b) {
+    uint8_t byte = b;
+    for (int i = 7; i >= 0; i--) {
+        if (byte & (1 << i)) {
+            pulse_gpio(GPIO_PIN_ONE);
+        } else {
+            pulse_gpio(GPIO_PIN_ZERO);
+        }
+    }
+}
+
+void sendUint32ToPi(uint32_t value) {
+    sendByteToPI(value & 0xFF);
+    sendByteToPI((value >> 8) & 0xFF);
+    sendByteToPI((value >> 16) & 0xFF);
+    sendByteToPI((value >> 24) & 0xFF);
+}
+
+void sendBytesToPi(const uint8_t* data, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        sendByteToPI(data[i]);
+    }
+}
+
+uint8_t getByteFromPi(void) {
+    uint8_t result = 0;
+    
+    for (int i = 7; i >= 0; i--) {
+        uint8_t bit_received = 0;
+        uint8_t pulse_detected = 0;
+        
+        while (!pulse_detected) {
+            uint32_t pin_state = BCM2837_GET32(BCM2837_GPLEV0);
+            
+            if (pin_state & (1 << GPIO_PIN_RX_ONE)) {
+                bit_received = 1;
+                pulse_detected = 1;
+                while (BCM2837_GET32(BCM2837_GPLEV0) & (1 << GPIO_PIN_RX_ONE)) {}
+            }
+            else if (pin_state & (1 << GPIO_PIN_RX_ZERO)) {
+                bit_received = 0;
+                pulse_detected = 1;
+                while (BCM2837_GET32(BCM2837_GPLEV0) & (1 << GPIO_PIN_RX_ZERO)) {}
+            }
+        }
+        
+        if (bit_received) {
+            result |= (1 << i);
+        }
+        
+        delay_us(SIGNAL_DELAY / 2);
+    }
+    
+    return result;
+}
+
+uint32_t getUint32FromPi(void) {
+    uint32_t value = 0;
+    value |= ((uint32_t)getByteFromPi()) << 0;
+    value |= ((uint32_t)getByteFromPi()) << 8;
+    value |= ((uint32_t)getByteFromPi()) << 16;
+    value |= ((uint32_t)getByteFromPi()) << 24;
+    return value;
+}
+
 int main(void) {
     printf("GM File System Handler\n");
     
