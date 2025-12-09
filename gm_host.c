@@ -192,6 +192,105 @@ uint32_t getUint32FromPi(void) {
     return value;
 }
 
+void getStringFromPi(char* buffer, size_t max_len) {
+    size_t i = 0;
+    while (i < max_len - 1) {
+        buffer[i] = (char)getByteFromPi();
+        if (buffer[i] == '\0') {
+            break;
+        }
+        i++;
+    }
+    buffer[i] = '\0';
+}
+
+void getBytesFromPi(uint8_t* buffer, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        buffer[i] = getByteFromPi();
+    }
+}
+
+// File Table Management
+
+GMFileEntry* findFileByHandle(uint32_t handle) {
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        if (file_table[i].is_open && file_table[i].handle == handle) {
+            return &file_table[i];
+        }
+    }
+    return NULL;
+}
+
+GMFileEntry* allocateFileEntry(void) {
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        if (!file_table[i].is_open) {
+            return &file_table[i];
+        }
+    }
+    return NULL;
+}
+
+// Protocol Handlers
+
+void handle_fopen(void) {
+    char filename[FILENAME_MAX_LEN];
+    char mode[8];
+    
+    printf("[GM] FOPEN request\n");
+    
+    // Request filename
+    sendByteToPI(NEXT_ARG);
+    getStringFromPi(filename, FILENAME_MAX_LEN);
+    printf("[GM]   Filename: %s\n", filename);
+    
+    // Request mode
+    sendByteToPI(NEXT_ARG);
+    getStringFromPi(mode, sizeof(mode));
+    printf("[GM]   Mode: %s\n", mode);
+    
+    // Open the file
+    FILE* f = fopen(filename, mode);
+    
+    if (f) {
+        // Allocate file entry
+        GMFileEntry* entry = allocateFileEntry();
+        if (entry) {
+            entry->file = f;
+            entry->handle = next_handle++;
+            entry->is_open = 1;
+            
+            // Get file size
+            fseek(f, 0, SEEK_END);
+            uint32_t file_size = (uint32_t)ftell(f);
+            fseek(f, 0, SEEK_SET);
+            
+            // Send ACK
+            sendByteToPI(ACK);
+            
+            // Send file handle
+            sendUint32ToPi(entry->handle);
+            
+            // Send file size
+            sendUint32ToPi(file_size);
+            
+            printf("[GM]   Success! Handle: %u, Size: %u\n", entry->handle, file_size);
+        } else {
+            printf("[GM]   Error: No free file slots\n");
+            // Send error (handle 0 means failure)
+            sendByteToPI(ACK);
+            sendUint32ToPi(0);
+            sendUint32ToPi(0);
+            fclose(f);
+        }
+    } else {
+        printf("[GM]   Error: Failed to open file\n");
+        // Send error
+        sendByteToPI(ACK);
+        sendUint32ToPi(0);
+        sendUint32ToPi(0);
+    }
+}
+
 int main(void) {
     printf("GM File System Handler\n");
     
