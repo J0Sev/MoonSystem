@@ -405,6 +405,115 @@ void handle_fread(void) {
     }
 }
 
+void handle_fseek(void) {
+    printf("[GM] FSEEK request\n");
+    
+    // Request file handle
+    sendByteToPI(NEXT_ARG);
+    uint32_t handle = getUint32FromPi();
+    
+    // Request offset
+    sendByteToPI(NEXT_ARG);
+    uint32_t offset = getUint32FromPi();
+    
+    // Request whence
+    sendByteToPI(NEXT_ARG);
+    uint8_t whence = getByteFromPi();
+    
+    printf("[GM]   Handle: %u, Offset: %d, Whence: %u\n", handle, (int32_t)offset, whence);
+    
+    GMFileEntry* entry = findFileByHandle(handle);
+    if (entry) {
+        fseek(entry->file, (long)offset, whence);
+        long new_pos = ftell(entry->file);
+        
+        // Send ACK
+        sendByteToPI(ACK);
+        
+        // Send new position
+        sendUint32ToPi((uint32_t)new_pos);
+        
+        printf("[GM]   New position: %ld\n", new_pos);
+    } else {
+        printf("[GM]   Error: Invalid handle\n");
+        sendByteToPI(ACK);
+        sendUint32ToPi(0);
+    }
+}
+
+void handle_ftell(void) {
+    printf("[GM] FTELL request\n");
+    
+    // Request file handle
+    sendByteToPI(NEXT_ARG);
+    uint32_t handle = getUint32FromPi();
+    
+    printf("[GM]   Handle: %u\n", handle);
+    
+    GMFileEntry* entry = findFileByHandle(handle);
+    if (entry) {
+        long pos = ftell(entry->file);
+        
+        // Send ACK
+        sendByteToPI(ACK);
+        
+        // Send position
+        sendUint32ToPi((uint32_t)pos);
+        
+        printf("[GM]   Position: %ld\n", pos);
+    } else {
+        printf("[GM]   Error: Invalid handle\n");
+        sendByteToPI(ACK);
+        sendUint32ToPi(0);
+    }
+}
+
+void handle_feof(void) {
+    printf("[GM] FEOF request\n");
+    
+    // Request file handle
+    sendByteToPI(NEXT_ARG);
+    uint32_t handle = getUint32FromPi();
+    
+    printf("[GM]   Handle: %u\n", handle);
+    
+    GMFileEntry* entry = findFileByHandle(handle);
+    if (entry) {
+        int eof_status = feof(entry->file);
+        
+        // Send ACK
+        sendByteToPI(ACK);
+        
+        // Send EOF status
+        sendByteToPI((uint8_t)eof_status);
+        
+        printf("[GM]   EOF: %d\n", eof_status);
+    } else {
+        printf("[GM]   Error: Invalid handle\n");
+        sendByteToPI(ACK);
+        sendByteToPI(1);  // Return EOF for invalid handle
+    }
+}
+
+void handle_rewind(void) {
+    printf("[GM] REWIND request\n");
+    
+    // Request file handle
+    sendByteToPI(NEXT_ARG);
+    uint32_t handle = getUint32FromPi();
+    
+    printf("[GM]   Handle: %u\n", handle);
+    
+    GMFileEntry* entry = findFileByHandle(handle);
+    if (entry) {
+        rewind(entry->file);
+        sendByteToPI(ACK);
+        printf("[GM]   Success!\n");
+    } else {
+        printf("[GM]   Error: Invalid handle\n");
+        sendByteToPI(ACK);
+    }
+}
 
 int main(void) {
     printf("GM File System Handler\n");
