@@ -291,6 +291,121 @@ void handle_fopen(void) {
     }
 }
 
+void handle_fclose(void) {
+    printf("[GM] FCLOSE request\n");
+    
+    // Request file handle
+    sendByteToPI(NEXT_ARG);
+    uint32_t handle = getUint32FromPi();
+    
+    printf("[GM]   Handle: %u\n", handle);
+    
+    GMFileEntry* entry = findFileByHandle(handle);
+    if (entry) {
+        fclose(entry->file);
+        entry->is_open = 0;
+        sendByteToPI(ACK);
+        printf("[GM]   Success!\n");
+    } else {
+        sendByteToPI(ACK);
+        printf("[GM]   Error: Invalid handle\n");
+    }
+}
+
+void handle_fwrite(void) {
+    printf("[GM] FWRITE request\n");
+    
+    // Request file handle
+    sendByteToPI(NEXT_ARG);
+    uint32_t handle = getUint32FromPi();
+    
+    // Request byte count
+    sendByteToPI(NEXT_ARG);
+    uint32_t byte_count = getUint32FromPi();
+    
+    printf("[GM]   Handle: %u, Bytes: %u\n", handle, byte_count);
+    
+    GMFileEntry* entry = findFileByHandle(handle);
+    if (entry) {
+        // Request data
+        sendByteToPI(NEXT_ARG);
+        
+        // Allocate temporary buffer
+        uint8_t* buffer = (uint8_t*)malloc(byte_count);
+        if (buffer) {
+            getBytesFromPi(buffer, byte_count);
+            
+            // Write to file
+            size_t written = fwrite(buffer, 1, byte_count, entry->file);
+            fflush(entry->file);
+            
+            free(buffer);
+            
+            // Send ACK
+            sendByteToPI(ACK);
+            
+            // Send bytes written
+            sendUint32ToPi((uint32_t)written);
+            
+            printf("[GM]   Wrote %zu bytes\n", written);
+        } else {
+            printf("[GM]   Error: Memory allocation failed\n");
+            sendByteToPI(ACK);
+            sendUint32ToPi(0);
+        }
+    } else {
+        printf("[GM]   Error: Invalid handle\n");
+        sendByteToPI(ACK);
+        sendUint32ToPi(0);
+    }
+}
+
+void handle_fread(void) {
+    printf("[GM] FREAD request\n");
+    
+    // Request file handle
+    sendByteToPI(NEXT_ARG);
+    uint32_t handle = getUint32FromPi();
+    
+    // Request byte count
+    sendByteToPI(NEXT_ARG);
+    uint32_t byte_count = getUint32FromPi();
+    
+    printf("[GM]   Handle: %u, Bytes: %u\n", handle, byte_count);
+    
+    GMFileEntry* entry = findFileByHandle(handle);
+    if (entry) {
+        // Allocate buffer
+        uint8_t* buffer = (uint8_t*)malloc(byte_count);
+        if (buffer) {
+            // Read from file
+            size_t bytes_read = fread(buffer, 1, byte_count, entry->file);
+            
+            // Send ACK
+            sendByteToPI(ACK);
+            
+            // Send byte count
+            sendUint32ToPi((uint32_t)bytes_read);
+            
+            // Send data
+            sendBytesToPi(buffer, bytes_read);
+            
+            free(buffer);
+            
+            printf("[GM]   Read %zu bytes\n", bytes_read);
+        } else {
+            printf("[GM]   Error: Memory allocation failed\n");
+            sendByteToPI(ACK);
+            sendUint32ToPi(0);
+        }
+    } else {
+        printf("[GM]   Error: Invalid handle\n");
+        sendByteToPI(ACK);
+        sendUint32ToPi(0);
+    }
+}
+
+
 int main(void) {
     printf("GM File System Handler\n");
     
