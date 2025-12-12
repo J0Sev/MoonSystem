@@ -8,10 +8,19 @@
 #include <vector>
 using namespace std;
 
+int gtou;
+int utog;
+
 
 void fopen() {
 
 }
+
+void sendMessage(int fd, const char* message) {
+    write(fd, message, strlen(message));
+}
+
+
 
 std::vector<std::string> split(const std::string& s, char delim) {
     std::vector<std::string> result;
@@ -37,7 +46,19 @@ void executeFopen(string& input) {
     string args = input.substr(6);
     vector<string> vArgs = split(args, ',');
 
-    cout << args << endl;
+    cout << "args:::" << args << endl;
+
+   
+
+    FILE *fp = fopen(vArgs[0].c_str(), vArgs[1].c_str());
+
+    cout << fp << endl;
+
+    int fd = fileno(fp);
+
+    const char* fdMessage = to_string(fd).c_str();
+
+    sendMessage(gtou, fdMessage);
     
 }
 
@@ -52,8 +73,8 @@ void executeSyscall(char* in) {
 
 
 int main() {
-    int gtou = open("/tmp/GtoU", O_WRONLY); // write to GtoL
-    int utog = open("/tmp/UtoG", O_RDONLY); // read from LtoG
+    gtou = open("/tmp/GtoU", O_WRONLY); // write to GtoL
+    utog = open("/tmp/UtoG", O_RDONLY); // read from LtoG
 
     const char* msg = "hiii";
     write(gtou, msg, strlen(msg));
