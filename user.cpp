@@ -16,7 +16,7 @@ void sendMessage(int fd, char* message) {
 
 
 int myFopen(string filename, string mode) {
-    string mString = "SYSTEMCALL:" + filename + "," + "MODE:" + mode;
+    string mString = "FOPEN:" + filename + "," + mode;
 
     char* m = new char[mString.size() + 1];
     std::strcpy(m, mString.c_str());
