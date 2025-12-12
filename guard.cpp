@@ -3,14 +3,32 @@
 #include <unistd.h>
 #include <cstring>
 
+
+void fopen() {
+
+}
+
+
+
 int main() {
-    int gtol = open("/tmp/GtoL", O_WRONLY); // write to GtoL
-    int ltog = open("/tmp/LtoG", O_RDONLY); // read from LtoG
+    int gtou = open("/tmp/GtoU", O_WRONLY); // write to GtoL
+    int utog = open("/tmp/UtoG", O_RDONLY); // read from LtoG
 
     const char* msg = "hiii";
-    write(gtol, msg, strlen(msg));
+    write(gtou, msg, strlen(msg));
 
-    close(gtol);
-    close(ltog);
+    char outputToU[100];
+    char inputFromU[100];
+
+    while (true) {
+        ssize_t n = read(utog, inputFromU, sizeof(inputFromU) - 1);
+        if (n > 0) {
+            inputFromU[n] = '\0';
+            std::cout << "Received: " << inputFromU << std::endl;
+        }
+    }
+
+    close(gtou);
+    close(utog);
 
 }
