@@ -55,6 +55,9 @@ bool checkRead(const string& input) {
 }
 
 
+bool checkWrite(const string& input) {
+    return input.rfind("WRITE:", 0) == 0;
+}
 
 
 
@@ -122,6 +125,30 @@ void executeRead(string& input) {
     sendMessage(gtou, buffer);
 }
 
+void executeWrite(string& input) {
+    vector<string> parts = split(input.substr(6), ',');
+    int fd = stoi(parts[0]);
+    string buf = parts[1];
+    int count = stoi(parts[2]);
+
+
+
+
+    char* buffer = new char[count + 10]; // Buffer to store read data
+    ssize_t bytesWritten = write(fd, buffer, count); // Read up to 99 bytes
+    if (bytesWritten == -1) {
+        perror("write");
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+
+    const char* fdMessage = to_string(bytesWritten).c_str();
+    sendMessage(gtou, fdMessage);
+}
+
+
+
 
 
 
@@ -134,8 +161,8 @@ void executeSyscall(char* in) {
         executeClose(input);
     else if (checkRead(input))
         executeRead(input);
-    // else if (checkWrite(input))
-    //     executeWrite(input);
+    else if (checkWrite(input))
+        executeWrite(input);
    
 }
 

@@ -73,6 +73,12 @@ int myRead(int fd, char* buffer, int count) {
 
 
 
+int myWrite(int fd, char* buffer, int count) {
+    string bufferString(buffer);
+    string mString = "WRITE:" + to_string(fd) + "," + bufferString + "," + to_string(count);
+    return 1;
+}
+
 
 
 
