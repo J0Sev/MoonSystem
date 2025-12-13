@@ -52,12 +52,14 @@ void executeFopen(string& input) {
 
     FILE *fp = fopen(vArgs[0].c_str(), vArgs[1].c_str());
 
-    cout << fp << endl;
 
     int fd = fileno(fp);
 
+    cout << fd << endl;
+
     const char* fdMessage = to_string(fd).c_str();
 
+    printf("%s\n", fdMessage);
     sendMessage(gtou, fdMessage);
     
 }
@@ -75,9 +77,6 @@ void executeSyscall(char* in) {
 int main() {
     gtou = open("/tmp/GtoU", O_WRONLY); // write to GtoL
     utog = open("/tmp/UtoG", O_RDONLY); // read from LtoG
-
-    const char* msg = "hiii";
-    write(gtou, msg, strlen(msg));
 
     char outputToU[100];
     char inputFromU[100];

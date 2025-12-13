@@ -8,8 +8,17 @@ using namespace std;
 int gtou; // read from GtoL
 int utog;
 
+char inputFromG[100];
+char outputToG[100];
+
 void sendMessage(int fd, char* message) {
     write(fd, message, strlen(message));
+}
+
+
+
+void readMessageFromG() {
+    ssize_t n = read(gtou, inputFromG, sizeof(inputFromG) - 1);
 }
 
 
@@ -22,6 +31,10 @@ int myFopen(string filename, string mode) {
     std::strcpy(m, mString.c_str());
     sendMessage(utog, m);
 
+    readMessageFromG();
+
+    printf("%s", inputFromG);
+
     return 1;
 
 }
@@ -33,8 +46,7 @@ int main() {
     gtou = open("/tmp/GtoU", O_RDONLY); // read from GtoL
     utog = open("/tmp/UtoG", O_WRONLY); // write to LtoG
 
-    char inputFromG[100];
-    char outputToG[100];
+ 
 
     myFopen("file.txt", "r");
 
