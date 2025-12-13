@@ -12,9 +12,6 @@ int gtou;
 int utog;
 
 
-void fopen() {
-
-}
 
 void sendMessage(int fd, const char* message) {
     write(fd, message, strlen(message));
@@ -34,28 +31,32 @@ std::vector<std::string> split(const std::string& s, char delim) {
 }
 
 
-bool checkFopen(string& input) {
-
-    cout << input.rfind("FOPEN:", 0) << endl;
-    if (input.rfind("FOPEN:", 0) == 0)
+bool checkOpen(string& input) {
+    cout << input.rfind("OPEN:", 0) << endl;
+    if (input.rfind("OPEN:", 0) == 0)
         return true;
     return false;
 }
 
-void executeFopen(string& input) {
+
+bool checkClose(string& input) {
+    if (input.rfind("CLOSE:", 0) == 0)
+        return true;
+    return false;
+}
+
+
+
+void executeOpen(string& input) {
     string args = input.substr(6);
     vector<string> vArgs = split(args, ',');
 
-    cout << "args:::" << args << endl;
+    int fd;
+    if (vArgs[1] == "r")
+        fd = open(vArgs[0].c_str(), O_RDONLY);
+    else
+        fd = open(vArgs[0].c_str(), O_WRONLY);
 
-   
-
-    FILE *fp = fopen(vArgs[0].c_str(), vArgs[1].c_str());
-
-
-    int fd = fileno(fp);
-
-    cout << fd << endl;
 
     const char* fdMessage = to_string(fd).c_str();
 
@@ -64,11 +65,29 @@ void executeFopen(string& input) {
     
 }
 
+
+void executeClose(string& input) {
+    string fileDescriptor = input.substr(6);
+
+    int fd = stoi(fileDescriptor);
+
+
+   
+
+    close(fd);
+
+    
+}
+
 void executeSyscall(char* in) {
     string input(in);
 
-    if (checkFopen(input))
-        executeFopen(input);
+    if (checkOpen(input))
+        executeOpen(input);
+
+
+    if (checkClose(input))
+        executeClose(input);
 
    
 }

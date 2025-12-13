@@ -35,7 +35,9 @@ int myFopen(string filename, string mode) {
 
     printf("%s", inputFromG);
 
-    return 1;
+    string inputFromGString(inputFromG);
+
+    return stoi(inputFromGString);
 
 }
 
