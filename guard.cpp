@@ -48,9 +48,10 @@ bool checkClose(string& input) {
 
 
 void executeOpen(string& input) {
-    string args = input.substr(6);
+    string args = input.substr(5);
     vector<string> vArgs = split(args, ',');
 
+    cout << "fisrt arg" << vArgs[0] << endl;
     int fd;
     if (vArgs[1] == "r")
         fd = open(vArgs[0].c_str(), O_RDONLY);
@@ -58,6 +59,7 @@ void executeOpen(string& input) {
         fd = open(vArgs[0].c_str(), O_WRONLY);
 
 
+    cout << "FD: " << fd << endl;
     const char* fdMessage = to_string(fd).c_str();
 
     printf("%s\n", fdMessage);
@@ -74,8 +76,7 @@ void executeClose(string& input) {
 
    
 
-    close(fd);
-
+    cout << "closed: " << close(fd) << endl;
     
 }
 
