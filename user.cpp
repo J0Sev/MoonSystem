@@ -71,12 +71,33 @@ int myRead(int fd, char* buffer, int count) {
     return strlen(buffer);
 }
 
+void myPing() {
+    string mString = "PING";
+
+    char* m = new char[mString.size() + 1];
+    strcpy(m, mString.c_str());
+    sendMessage(utog, m);
+    delete[] m;
+
+    readMessageFromG();
+
+    printf("Ping response: %s\n", inputFromG);
+}
 
 
-int myWrite(int fd, char* buffer, int count) {
+
+
+int myWrite(int fd, const char* buffer, int count) {
     string bufferString(buffer);
     string mString = "WRITE:" + to_string(fd) + "," + bufferString + "," + to_string(count);
-    return 1;
+
+    char* m = new char[mString.size() + 1];
+    strcpy(m, mString.c_str());
+    sendMessage(utog, m);
+
+    readMessageFromG();
+    string inputFromGString(inputFromG);
+    return stoi(inputFromGString);
 }
 
 
@@ -84,12 +105,13 @@ int myWrite(int fd, char* buffer, int count) {
 
 int mymain() {
     int fd = myOpen("file.txt", "r");
-     
+    
     char readBuffer[50];
     int bytesRead = myRead(fd, readBuffer, 50);
     printf("Read %d bytes: %s\n", bytesRead, readBuffer);
 
-
+    const char* writeData = "Hello, file!";
+    myWrite(fd, writeData, strlen(writeData));
 
     myClose(fd);
 
