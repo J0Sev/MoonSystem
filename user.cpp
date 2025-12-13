@@ -24,8 +24,8 @@ void readMessageFromG() {
 
 
 
-int myFopen(string filename, string mode) {
-    string mString = "FOPEN:" + filename + "," + mode;
+int myOpen(string filename, string mode) {
+    string mString = "OPEN:" + filename + "," + mode;
 
     char* m = new char[mString.size() + 1];
     std::strcpy(m, mString.c_str());
@@ -43,14 +43,38 @@ int myFopen(string filename, string mode) {
 
 
 
+void myClose(int fd) {
+    string mString = "CLOSE:" + to_string(fd);
+
+    char* m = new char[mString.size() + 1];
+    std::strcpy(m, mString.c_str());
+    sendMessage(utog, m);
+
+    readMessageFromG();
+
+    printf("%s", inputFromG);
+
+}
+
+
+
+int mymain() {
+    int fd = myOpen("file.txt", "r");
+    myClose(fd);
+
+    return 0;
+}
+
+
 
 int main() {
     gtou = open("/tmp/GtoU", O_RDONLY); // read from GtoL
     utog = open("/tmp/UtoG", O_WRONLY); // write to LtoG
 
  
+    int r = mymain();
 
-    myFopen("file.txt", "r");
+
 
     close(gtou);
     close(utog);
