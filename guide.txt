@@ -1,0 +1,3 @@
+The programs user.cpp and guard.cpp are intended to run in tandem. I test them by running `g++ user.cpp -o user` and `./user` on one terminal and `g++ guard.cpp -o guard` and `./guard` on another.
+
+The mymain() function is meant to be the simulated main() body of the program that is using my versions of the file system calls.
