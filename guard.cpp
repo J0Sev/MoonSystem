@@ -59,6 +59,24 @@ bool checkWrite(const string& input) {
     return input.rfind("WRITE:", 0) == 0;
 }
 
+bool checkPing(const string& input) {
+    return input == "PING";
+}
+
+void executePing() {
+    const char* response = "PONG";
+    sendMessage(gtou, response);
+}
+
+
+bool checkStatus(const string& input) {
+    return input == "STATUS";
+}
+
+void executeStatus() {
+    string response = "OPEN_FILES:" + to_string(fileBuffers.size());
+    sendMessage(gtou, response.c_str());
+}
 
 
 
