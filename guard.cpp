@@ -39,11 +39,22 @@ bool checkOpen(string& input) {
 }
 
 
+
+
 bool checkClose(string& input) {
     if (input.rfind("CLOSE:", 0) == 0)
         return true;
     return false;
 }
+
+
+
+bool checkRead(const string& input) {
+    return input.rfind("READ:", 0) == 0;
+}
+
+
+
 
 
 
@@ -80,16 +91,36 @@ void executeClose(string& input) {
     
 }
 
+
+
+void executeRead(string& input) {
+    vector<string> parts = split(input.substr(5), ',');
+    int fd = stoi(parts[0]);
+    int count = stoi(parts[1]);
+
+    string data = "";
+    if (fileBuffers.count(fd)) {
+        data = fileBuffers[fd].substr(0, count);
+        fileBuffers[fd] = fileBuffers[fd].substr(count); // consume data
+    }
+
+    sendMessage(gtou, data.c_str());
+}
+
+
+
+
 void executeSyscall(char* in) {
     string input(in);
 
     if (checkOpen(input))
         executeOpen(input);
-
-
-    if (checkClose(input))
+    else if (checkClose(input))
         executeClose(input);
-
+    else if (checkRead(input))
+        executeRead(input);
+    else if (checkWrite(input))
+        executeWrite(input);
    
 }
 
