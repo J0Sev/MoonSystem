@@ -42,7 +42,6 @@ int myOpen(string filename, string mode) {
 }
 
 
-
 void myClose(int fd) {
     string mString = "CLOSE:" + to_string(fd);
 
@@ -55,6 +54,25 @@ void myClose(int fd) {
     printf("%s", inputFromG);
 
 }
+
+
+int myRead(int fd, char* buffer, int count) {
+    string mString = "READ:" + to_string(fd) + "," + to_string(count);
+
+    char* m = new char[mString.size() + 1];
+    strcpy(m, mString.c_str());
+    sendMessage(utog, m);
+    delete[] m;
+
+    readMessageFromG();
+    strncpy(buffer, inputFromG, count);
+    buffer[count] = '\0'; // ensure null-terminated
+
+    return strlen(buffer);
+}
+
+
+
 
 
 
