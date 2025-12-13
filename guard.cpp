@@ -103,13 +103,23 @@ void executeRead(string& input) {
     int fd = stoi(parts[0]);
     int count = stoi(parts[1]);
 
-    string data = "";
-    if (fileBuffers.count(fd)) {
-        data = fileBuffers[fd].substr(0, count);
-        fileBuffers[fd] = fileBuffers[fd].substr(count); // consume data
+
+    cout << fd << endl;
+    cout << count << endl;
+
+
+    char* buffer = new char[count + 10]; // Buffer to store read data
+    ssize_t bytesRead = read(fd, buffer, count); // Read up to 99 bytes
+    if (bytesRead == -1) {
+        perror("read");
+        close(fd);
+        exit(EXIT_FAILURE);
     }
 
-    sendMessage(gtou, data.c_str());
+    buffer[bytesRead] = '\0'; // Null-terminate the string
+
+
+    sendMessage(gtou, buffer);
 }
 
 

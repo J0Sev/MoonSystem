@@ -78,6 +78,13 @@ int myRead(int fd, char* buffer, int count) {
 
 int mymain() {
     int fd = myOpen("file.txt", "r");
+     
+    char readBuffer[50];
+    int bytesRead = myRead(fd, readBuffer, 50);
+    printf("Read %d bytes: %s\n", bytesRead, readBuffer);
+
+
+
     myClose(fd);
 
     return 0;
@@ -91,8 +98,6 @@ int main() {
 
  
     int r = mymain();
-
-
 
     close(gtou);
     close(utog);
