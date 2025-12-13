@@ -6,12 +6,13 @@
 #include <vector>
 #include <sstream>
 #include <vector>
+#include <unordered_map>
 using namespace std;
 
 int gtou;
 int utog;
 
-
+unordered_map<int, string> fileBuffers;
 
 void sendMessage(int fd, const char* message) {
     write(fd, message, strlen(message));
@@ -64,10 +65,14 @@ void executeOpen(string& input) {
 
     cout << "fisrt arg" << vArgs[0] << endl;
     int fd;
-    if (vArgs[1] == "r")
+    if (vArgs[1] == "r") {
         fd = open(vArgs[0].c_str(), O_RDONLY);
-    else
+        fileBuffers[fd] = "";
+    }
+    else {
         fd = open(vArgs[0].c_str(), O_WRONLY);
+        fileBuffers[fd] = "";
+    }
 
 
     cout << "FD: " << fd << endl;
@@ -119,8 +124,8 @@ void executeSyscall(char* in) {
         executeClose(input);
     else if (checkRead(input))
         executeRead(input);
-    else if (checkWrite(input))
-        executeWrite(input);
+    // else if (checkWrite(input))
+    //     executeWrite(input);
    
 }
 
